@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lucca 60 Planner</title>
+<meta name="theme-color" content="#9E1B32">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lucca 60">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+html{-webkit-text-size-adjust:100%}
+body{margin:0;padding-top:env(safe-area-inset-top,0px)}
+img{max-width:100%}
+</style>
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: sticky ticket-strip header, five sections switched from a bottom bar (Calendario, In giornata, Da comprare, Editori, Mappa) */
+:root{
+  --bg:#ECEEF0; --surface:#FFFFFF; --ink:#1B2430; --muted:#5D6774; --line:#D3D9DF;
+  --brand:#9E1B32; --brand-ink:#FFFFFF;
+  --go:#1F5F7A; --go-bg:#E3EFF4;
+  --pin:#B97A08; --pin-bg:#FFF2D2; --pin-line:#E7B64A;
+  --clash:#C2412D; --clash-bg:#FBE6E1;
+  --ok:#2F7D4F; --maybe:#8A939E;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11151A; --surface:#1A2028; --ink:#E7EBEF; --muted:#9AA4B0; --line:#2B333D;
+  --brand:#D9475F; --brand-ink:#FFFFFF;
+  --go:#6BB8D6; --go-bg:#16303B;
+  --pin:#F2B53A; --pin-bg:#3A2D10; --pin-line:#8A6618;
+  --clash:#F27A62; --clash-bg:#3E1D17; --ok:#6CC28F;
+  --maybe:#77818C; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#11151A; --surface:#1A2028; --ink:#E7EBEF; --muted:#9AA4B0; --line:#2B333D;
+  --brand:#D9475F; --brand-ink:#FFFFFF;
+  --go:#6BB8D6; --go-bg:#16303B;
+  --pin:#F2B53A; --pin-bg:#3A2D10; --pin-line:#8A6618;
+  --clash:#F27A62; --clash-bg:#3E1D17; --ok:#6CC28F;
+  --maybe:#77818C; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.4}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--brand)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--go);outline-offset:2px}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.band{background:var(--brand);color:var(--brand-ink);padding-block:10px 0;display:flex;flex-direction:column;gap:8px}
+.brandrow{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.brandrow h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:22px;letter-spacing:.04em;text-transform:uppercase}
+.brandrow small{font-family:var(--f-display);font-size:15px;letter-spacing:.06em;opacity:.9;text-transform:uppercase}
+.days{display:flex;gap:4px}
+.day{flex:1;border:0;background:transparent;color:var(--brand-ink);opacity:.7;padding:6px 8px 9px;font-family:var(--f-display);font-size:18px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;border-radius:8px 8px 0 0;cursor:pointer}
+.day[aria-selected="true"]{opacity:1;background:var(--bg);color:var(--ink)}
+.band.nodays{padding-bottom:10px}
+.controls{padding-block:10px;display:flex;flex-direction:column;gap:8px}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{border:0;background:transparent;padding:7px 6px;border-radius:7px;font-weight:600;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-inline:-4px;padding-inline:4px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{border-color:var(--ink);color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+
+main{padding-block:12px calc(96px + env(safe-area-inset-bottom,0px));max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.summary{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);align-items:center}
+.summary b{font-family:var(--f-display);font-size:18px;color:var(--ink);font-variant-numeric:tabular-nums;margin-right:2px}
+.summary .k-pin b{color:var(--pin)} .summary .k-clash b{color:var(--clash)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:10px;height:10px;border-radius:3px;display:inline-block}
+.now{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:4px;font-size:14px}
+.lbl{font-family:var(--f-display);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);font-weight:700}
+.intro{font-size:14px;color:var(--muted);margin:0}
+
+.slot{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;align-items:start}
+.rail{font-family:var(--f-display);font-weight:600;font-size:19px;font-variant-numeric:tabular-nums;padding-top:9px;text-align:right}
+.block{display:flex;flex-direction:column;gap:6px;min-width:0}
+.multi{border:1px dashed var(--line);border-radius:14px;padding:6px;gap:6px;display:flex;flex-direction:column}
+.multi.clash{border:1.5px solid var(--clash);background:var(--clash-bg)}
+.mhead{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:2px 4px 0}
+.multi.clash .mhead{color:var(--clash)}
+.gap{margin-left:62px;font-size:12.5px;color:var(--muted);border-left:2px dotted var(--line);padding:3px 0 3px 10px;display:flex;flex-wrap:wrap;gap:4px 10px}
+.gap.tight{color:var(--clash);border-left-color:var(--clash);font-weight:600}
+
+.opt{background:var(--surface);border:1px solid var(--line);border-radius:12px;position:relative;overflow:hidden}
+.opt::before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--go)}
+.opt.st-fisso{background:var(--pin-bg);border-color:var(--pin-line)}
+.opt.st-fisso::before{background:var(--pin)}
+.opt.st-forse::before{background:repeating-linear-gradient(180deg,var(--maybe) 0 5px,transparent 5px 9px)}
+.opt.st-salto{opacity:.5}
+.opt.st-salto::before{background:var(--line)}
+.opt.st-salto .ttl{text-decoration:line-through}
+.opt.done{opacity:.62}
+.opt.done .ttl::after{content:" ✓";color:var(--ok)}
+.opt.clash{box-shadow:0 0 0 1.5px var(--clash)}
+.ohead{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;width:100%;text-align:left;background:transparent;border:0;padding:9px 10px 9px 15px;cursor:pointer;align-items:start}
+.ohead.nobox{grid-template-columns:minmax(0,1fr) auto}
+.box{width:22px;height:22px;border:2px solid var(--line);border-radius:6px;margin-top:1px;display:grid;place-items:center;flex:none;background:var(--surface)}
+.done .box{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.box svg{width:14px;height:14px}
+.times{font-family:var(--f-display);font-weight:600;font-size:15px;font-variant-numeric:tabular-nums;color:var(--muted);letter-spacing:.02em}
+.ttl{font-weight:700;font-size:15px;line-height:1.25;display:block;text-wrap:balance}
+.meta{font-size:13px;color:var(--muted);display:block;margin-top:2px}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.tag{font-size:11px;font-weight:700;letter-spacing:.03em;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.tag.warn{border-color:var(--clash);color:var(--clash)}
+.tag.price{border-color:var(--go);color:var(--go)}
+.pill{align-self:start;font-family:var(--f-display);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.st-fisso .pill{background:var(--pin);color:var(--surface)}
+.st-scelto .pill{background:var(--go);color:var(--surface)}
+.st-forse .pill{border:1px dashed var(--maybe);color:var(--muted)}
+.st-salto .pill{color:var(--muted)}
+.pill svg{width:11px;height:11px}
+.detail{padding:0 12px 12px 15px;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.detail dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 10px}
+.detail dt{color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding-top:2px}
+.detail dd{margin:0}
+.acts{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.act{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 2px;font-size:13px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.1}
+.act svg{width:16px;height:16px}
+.act[aria-pressed="true"].a-fisso{background:var(--pin);border-color:var(--pin);color:var(--surface)}
+.act[aria-pressed="true"].a-scelto{background:var(--go);border-color:var(--go);color:var(--surface)}
+.act[aria-pressed="true"].a-forse{border:1.5px dashed var(--ink)}
+.act[aria-pressed="true"].a-salto{background:var(--line)}
+.acts2{display:flex;gap:6px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 11px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.btn svg{width:15px;height:15px}
+
+h2.sec{font-family:var(--f-display);font-size:16px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 0;font-weight:700}
+.empty{color:var(--muted);font-size:14px;padding:12px 0}
+.foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;margin-top:8px}
+.reset{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font-weight:600;cursor:pointer}
+.reset.arm{border-color:var(--clash);color:var(--clash)}
+
+/* Editori */
+.pub{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.pubhead{width:100%;border:0;background:transparent;text-align:left;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:12px 14px;cursor:pointer;align-items:center}
+.pubname{font-family:var(--f-display);font-size:21px;font-weight:700;letter-spacing:.02em;line-height:1.1}
+.pubsub{font-size:13px;color:var(--muted)}
+.count{font-family:var(--f-display);font-size:14px;font-weight:700;color:var(--muted);white-space:nowrap}
+.pubbody{padding:0 10px 12px;display:flex;flex-direction:column;gap:8px}
+.info{font-size:14px;background:var(--bg);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.info h4{margin:4px 0 0;font-family:var(--f-display);font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.info p{margin:0} .info ul{margin:0;padding-left:18px}
+.tw{overflow-x:auto}
+.info table{border-collapse:collapse;font-size:13px;width:100%}
+.info th,.info td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+.info th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.dayh{font-family:var(--f-display);font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:4px 2px 0}
+
+/* Mappa */
+.mapbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.mapwrap{position:relative;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);height:calc(100dvh - 300px);min-height:320px;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+.mapinner{position:relative}
+.mapinner img{display:block;width:100%;height:auto;max-width:none;user-select:none;-webkit-user-drag:none}
+.mk{position:absolute;transform:translate(-50%,-100%);border:0;background:transparent;padding:0;cursor:pointer}
+.mk span{display:grid;place-items:center;min-width:28px;height:28px;padding:0 6px;border-radius:14px 14px 14px 3px;background:var(--go);color:#fff;font-family:var(--f-display);font-weight:700;font-size:15px;box-shadow:0 2px 6px rgba(0,0,0,.35);border:2px solid #fff}
+.mk.k-fisso span{background:var(--pin)}
+.mk.k-forse span{background:#7d8792}
+.mk.k-park span{background:#22468f}
+.mk.sel span{outline:3px solid var(--clash);outline-offset:1px}
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.sheet h3{margin:0;font-family:var(--f-display);font-size:19px;letter-spacing:.02em}
+
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:8;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.nav button{border:0;background:transparent;padding:8px 2px 9px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;font-weight:700;color:var(--muted);cursor:pointer}
+.nav button svg{width:22px;height:22px}
+.nav button[aria-current="page"]{color:var(--brand)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:10px;font-size:14px;max-width:calc(100% - 32px);z-index:20}
+@media (prefers-reduced-motion:no-preference){.opt{transition:background .15s,border-color .15s,opacity .15s}}
+</style>
+
+<header class="top">
+  <div class="band gut" id="band">
+    <div class="brandrow"><h1>Lucca 60</h1><small id="sectitle">Calendario</small></div>
+    <div class="days" role="tablist" id="days">
+      <button class="day" role="tab" data-day="mer">Mer 28 ott</button>
+      <button class="day" role="tab" data-day="gio">Gio 29 ott</button>
+    </div>
+  </div>
+  <div class="controls gut" id="controls"></div>
+</header>
+<main id="app" class="gut"></main>
+<nav class="nav" id="nav" aria-label="Sezioni"></nav>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ---------- costanti ---------- */
+const DAYN={mer:"Mer 28",gio:"Gio 29",both:"Mer + Gio"};
+const CATS=[["all","Tutto"],["fumetti","Fumetti"],["ritiri","Ritiri e ticket"],["tcg","Magic e TCG"],["giochi","Giochi e librigame"],["figure","Action figure"],["eventi","Incontri ed eventi"]];
+const STATES={fisso:"Fisso",scelto:"Lo faccio",forse:"Forse",salto:"Salto"};
+const SVG=p=>`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const ICON={
+ fisso:'<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M10.5 1.5l4 4-2 1-2.6 2.6.4 3.4-1.3 1.3-2.8-2.8L2.5 14.5l-1-1 3.5-3.7L2.2 7l1.3-1.3 3.4.4L9.5 3.5z"/></svg>',
+ scelto:SVG('<path d="M3 8.5l3.2 3L13 4.5"/>'),
+ forse:SVG('<path d="M5.5 6a2.5 2.5 0 1 1 3.4 2.3c-.6.3-.9.7-.9 1.3V10"/><circle cx="8" cy="12.6" r=".6" fill="currentColor"/>'),
+ salto:SVG('<path d="M4 4l8 8M12 4l-8 8"/>'),
+ check:SVG('<path d="M3 8.5l3.2 3L13 4.5"/>'),
+ pin:SVG('<path d="M8 14.5s4.5-4.3 4.5-8a4.5 4.5 0 0 0-9 0c0 3.7 4.5 8 4.5 8z"/><circle cx="8" cy="6.5" r="1.6"/>'),
+ cal:SVG('<rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/>'),
+ list:SVG('<path d="M6 4h8M6 8h8M6 12h8"/><circle cx="2.7" cy="4" r=".8" fill="currentColor"/><circle cx="2.7" cy="8" r=".8" fill="currentColor"/><circle cx="2.7" cy="12" r=".8" fill="currentColor"/>'),
+ bag:SVG('<path d="M3 5h10l-1 9H4z"/><path d="M5.5 5a2.5 2.5 0 0 1 5 0"/>'),
+ book:SVG('<path d="M2.5 3h4a1.5 1.5 0 0 1 1.5 1.5V14a1.5 1.5 0 0 0-1.5-1.5h-4zM13.5 3h-4A1.5 1.5 0 0 0 8 4.5V14a1.5 1.5 0 0 1 1.5-1.5h4z"/>'),
+ map:SVG('<path d="M1.5 3.5l4-1.5 5 2 4-1.5v10l-4 1.5-5-2-4 1.5z"/><path d="M5.5 2v10M10.5 4v10"/>')
+};
+const TABS=[["cal","Calendario",ICON.cal],["giorno","In giornata",ICON.list],["compra","Da comprare",ICON.bag],["editori","Editori",ICON.book],["mappa","Mappa",ICON.map]];
+
+/* ---------- mappa: coordinate sulla mappa ufficiale (px a 150 dpi, 3957×2776; 450 px = 300 m) ---------- */
+const MW=3957,MH=2776,M_PER_PX=300/450;
+const POI={
+ park:[2330,430,"Il tuo parcheggio (via Borgo Giannotti)"],
+ gbase:[2055,1078,"THE GUNDAM BASE, Piazza San Frediano"],
+ bandai:[2165,885,"Bandai Namco, Via della Cavallerizza"],
+ tamashii:[2435,880,"Tamashii Nations × Cosmic Group, Piazza Santa Maria"],
+ naruto:[2330,890,"Bandai Card Games / Naruto, Piazza Santa Maria"],
+ pika:[1270,745,"Welcome desk Santa Croce: carte"],
+ panini:[890,1085,"Padiglione Panini"],
+ voucher:[975,1115,"Ritiro voucher prenotazioni"],
+ mirage:[960,1185,"Monografico Mirage/Shockdom, Piazzale Verdi"],
+ nap1:[1490,1675,"Padiglione Napoleone 1 (BAO, Tora, La fine del mondo)"],
+ nap2:[1480,1780,"Padiglione Napoleone 2 (saldaPress, Gigaciao)"],
+ giglio:[1570,1800,"Padiglione Giglio (Mirage GGL113, Artist Alley)"],
+ tgiglio:[1520,1870,"Teatro del Giglio / Piazza del Giglio"],
+ sanromano:[1170,1680,"Auditorium San Romano"],
+ bonelli:[1815,1845,"PalaBonelli, Piazza Antelminelli"],
+ scotts:[1895,1880,"Scott's Artist Alley, Oratorio di San Giuseppe"],
+ tomodachi:[1885,1780,"Stand Tomodachi Press"],
+ agora:[1975,1790,"Self Area, Biblioteca Agorà"],
+ sanmartino:[1650,1880,"Padiglione San Martino"],
+ carducci:[1000,2000,"Padiglione Carducci (Games)"],
+ osservanti:[2830,1300,"Giardino degli Osservanti (Collectible)"],
+ pokemon:[3060,1290,"Pokémon, Palestra Bacchettoni"],
+ sanfrancesco:[2720,1370,"Auditorium San Francesco"],
+ anniv:[1495,1915,"Anniversary Point, Piazza del Giglio"]
+};
+function walkMin(a,b){
+  if(!a||!b||a===b||!POI[a]||!POI[b])return 0;
+  const dx=POI[a][0]-POI[b][0],dy=POI[a][1]-POI[b][1];
+  const m=Math.hypot(dx,dy)*M_PER_PX*1.35;
+  return Math.max(2,Math.round(m/65));
+}
+
+/* ---------- case editrici ---------- */
+const PUBS={
+ mirage:{n:"Mirage Comics",sub:"Monografico Piazzale Verdi + stand GGL113 al Giglio"},
+ panini:{n:"Panini",sub:"Comics e Disney, Padiglione Panini"},
+ bonelli:{n:"Sergio Bonelli Editore",sub:"PalaBonelli, Piazza Antelminelli"},
+ salda:{n:"saldaPress",sub:"Padiglione Napoleone 2"},
+ bao:{n:"BAO Publishing",sub:"Napoleone, stand NAP312 · firme senza prenotazione"},
+ gigaciao:{n:"Gigaciao",sub:"Padiglione Napoleone 2"},
+ lfdm:{n:"La fine del mondo",sub:"Maicol & Mirco con il manifesto, NAP111"},
+ tora:{n:"Tora Edizioni",sub:"Padiglione Napoleone, stand 411"},
+ scotts:{n:"Scott's Collectables",sub:"Artist Alley, Oratorio di San Giuseppe"},
+ tomodachi:{n:"Tomodachi Press",sub:"Masterpiece Card Series Vol. 4"},
+ autori:{n:"Altri autori",sub:"Barbieri, Recchioni, Bianchi, Croix"},
+ bandai:{n:"Bandai, Gundam e Tamashii",sub:"Porta Santa Maria e San Frediano"},
+ iron:{n:"Iron Studios",sub:"Giardino degli Osservanti"},
+ giochi:{n:"Giochi, Magic e librigame",sub:"Padiglione Carducci e dintorni"},
+ pokemon:{n:"Pokémon",sub:"Carta Pikachu, Palestra Bacchettoni"},
+ lucca:{n:"Lucca C&G ed eventi",sub:"Go Nagai, Naruto, Anniversary"},
+ altri:{n:"Altri editori",sub:"Feltrinelli, Lo Scarabeo, Blokees"}
+};
+
+/* ---------- dati: k = ora (calendario) · giorno (in giornata) · compra (da comprare) ---------- */
+const DGNOTE="Per entrare serve comprare uno tra: Manaya (regular o variant Paul Azaceta), Transformers #1 variant Di Giandomenico, Super Creepshow. Solo 15 doodle a sessione: arrivare all'inizio.";
+const EVENTS=[
+ /* ===== MERCOLEDÌ ===== */
+ {id:"arr-mer",k:"ora",d:"mer",s:"08:45",e:"08:50",t:"Arrivo al parcheggio",pub:"lucca",poi:"park",w:"Parcheggio a nord di Porta Santa Maria",n:"Si entra da Porta Santa Maria: la zona Bandai/Gundam è subito dentro.",c:[],st:"scelto"},
+ {id:"gbase",k:"ora",d:"mer",s:"09:00",e:"09:15",t:"THE GUNDAM BASE pop-up",pub:"bandai",poi:"gbase",w:"Piazza San Frediano",n:"Kit in anteprima: RG 1/144 Wing Gundam Zero EW (Apex Legends Valkyrie Ver.), RG 1/144 Freedom Gundam (Crypto Ver.), RG 1/144 Gundam Epyon (Alter Ver.) + altri limited GBase. Gadget: coroncina di carta (visita), Action Base 1 (sondaggio), Gunpla 40th Anniversary logo (seguire i social: farlo prima), shopper personalizzata (spesa da 40 €).",c:["figure"],st:"scelto"},
+ {id:"bandai",k:"ora",d:"mer",s:"09:18",e:"09:35",t:"Bandai Namco Palace + Tamagotchi + Tamashii",pub:"bandai",poi:"bandai",w:"Via della Cavallerizza e Piazza Santa Maria",n:"Giro veloce: è vicino al parcheggio, ci ripassi a fine giornata (anche per il tutorial Naruto delle 18:15). Esclusive Banpresto, gashapon, Tamagotchi Original 30° esclusiva + TamaLab. Tamashii Nations ha due sedi: stand Bandai Namco e spazio Tamashii × Cosmic Group in Piazza Santa Maria (limited già venduti in altri eventi + esposizione world premiere). Saint Cloth Myth EX Sagittarius Seiya [God Cloth] \"in preorder\": chiedere come funziona.",c:["figure"],st:"scelto"},
+ {id:"pika",k:"ora",d:"mer",s:"09:48",e:"09:55",t:"Carta Pikachu Lucca60",pub:"pokemon",poi:"pika",w:"Card Distribution Point, Welcome desk Santa Croce (sulle mura)",n:"Serve biglietto + braccialetto. Altro punto vicino: Biglietteria Santa Croce.",c:["tcg"],st:"scelto"},
+ {id:"mirage-rit",k:"ora",d:"mer",s:"10:02",e:"10:15",t:"Ritiro preordine Mirage: 7 volumi + ticket Priority Plus",pub:"mirage",poi:"mirage",w:"Monografico Mirage/Shockdom, Piazzale Verdi",n:"Mostrare la mail del preordine. Chiedere se il ticket di Tarragona vale anche all'Artist Alley del Giglio.",c:["ritiri","fumetti"],st:"fisso"},
+ {id:"pp-mer",k:"ora",d:"mer",s:"10:15",e:"10:30",t:"Pastrovicchio + Perissinotto (Street Sharks #1 A e B)",pub:"mirage",poi:"mirage",win:"Al Monografico solo 9:30–10:30",n:"Subito dopo il ritiro, con i ticket Priority Plus appena presi.",c:["fumetti","ritiri"],st:"fisso",g:"pp",alt:"Piano B: gio 9:30"},
+ {id:"topo",k:"ora",d:"mer",s:"10:32",e:"10:40",t:"Topolino 3701 e 3702 variant",pub:"panini",poi:"panini",w:"Padiglione Panini, stand Disney (accanto a Porta San Donato)",n:"3701 variant Paolo Barbieri 8 €, 3702 variant Enrico Faccini 9 €.",c:["fumetti"],st:"scelto",price:17},
+ {id:"tora",k:"ora",d:"mer",s:"10:52",e:"10:58",t:"Tora: librogame + firma Paolo Barbieri",pub:"tora",poi:"nap1",w:"Padiglione Napoleone, stand Tora 411",win:"Barbieri da Tora fino alle 11:00",n:"«Cosa fare a Lucca quando sei morto…» (Ultima Forsan, volume speciale Lucca60). Se hai già il Topolino 3701 (cover sua) chiedi se firma anche quello. C'è anche Toccafondi (Aki).",c:["giochi","fumetti"],st:"scelto",b:"Barbieri fino alle 11"},
+ {id:"salda-esc",k:"ora",d:"mer",s:"11:00",e:"11:20",t:"Esclusive saldaPress",pub:"salda",poi:"nap2",w:"Padiglione Napoleone 2",n:"Bundle Transformers #1 Dan Mora (Optimus + Megatron, 7 stampe), vol. 5 DWJ, Battle Beast vol. 2 Ottley, G.I. Joe #1 variant Simmonds (serve per la firma di giovedì). Prendi anche: un Undiscovered Country (per Camuncoli) e Manaya / Super Creepshow / TF #1 variant Di Giandomenico (per Di Giandomenico). Se le variant sono finite, si riprova giovedì.",c:["fumetti"],st:"scelto"},
+ {id:"dg-mer",k:"ora",d:"mer",s:"11:20",e:"12:00",t:"saldaPress: Carmine Di Giandomenico",pub:"salda",poi:"nap2",win:"11:00–13:00",n:DGNOTE,c:["fumetti"],st:"scelto",g:"dg",alt:"Alternativa a gio 16:00",b:"15 doodle a sessione"},
+ {id:"pranzo-mer",k:"ora",d:"mer",s:"12:15",e:"12:45",t:"Pranzo (zona Napoleone)",pub:"lucca",poi:"nap1",w:"Intorno a Piazza Napoleone",n:"Alle 12:55 in fila per Camuncoli.",c:[],st:"scelto"},
+ {id:"camu",k:"ora",d:"mer",s:"13:00",e:"14:00",t:"saldaPress: Giuseppe Camuncoli",pub:"salda",poi:"nap2",win:"13:00–14:30, unica sessione",n:"Per entrare serve comprare un volume di Undiscovered Country (1-6). Solo 10 doodle: in fila alle 13:00.",c:["fumetti"],st:"scelto",b:"10 doodle a sessione"},
+ {id:"nagai-v",k:"ora",d:"mer",s:"13:30",e:"13:45",t:"Go Nagai: voucher rimasti",pub:"lucca",poi:"voucher",w:"Ritiro voucher prenotazioni (Piazzale Verdi)",win:"Distribuzione voucher non ritirati alle 13:30",n:"Prenotazione del 23/10 non riuscita. Ultima possibilità, fino a esaurimento. Si sovrappone a Camuncoli.",c:["eventi"],st:"forse",b:"Non garantito"},
+ {id:"tarra",k:"ora",d:"mer",s:"14:52",e:"15:15",t:"Jordi Tarragona (Masters of Comics: Legacy)",pub:"mirage",poi:"giglio",w:"Elite Creator Artist Alley, Padiglione Giglio",win:"9:30–19:00 (al Monografico solo 30/10–1/11)",n:"Nel Giglio c'è anche lo stand Mirage GGL113.",c:["fumetti","ritiri"],st:"scelto",b:"Ticket valido? chiedere"},
+ {id:"azaceta-mer",k:"ora",d:"mer",s:"15:00",e:"17:30",t:"saldaPress: Paul Azaceta",pub:"salda",poi:"nap2",win:"15:00–17:30",n:"Copertina variant di Manaya; co-creatore di Outcast.",c:["fumetti"],st:"forse",span:true},
+ {id:"nagai",k:"ora",d:"mer",s:"15:00",e:"16:00",t:"Go Nagai Maxishowcase",pub:"lucca",poi:"tgiglio",w:"Teatro del Giglio",n:"Si entra solo con un voucher avanzato (13:30).",c:["eventi"],st:"salto",b:"Solo con voucher"},
+ {id:"tomo-pres",k:"ora",d:"mer",s:"15:00",e:"16:00",t:"Masterpiece Card Series Vol. 4: presentazione",pub:"tomodachi",poi:"sanfrancesco",w:"Auditorium San Francesco",n:"Con Agnese Innocente (Alice nel Paese delle Meraviglie).",c:["giochi","eventi"],st:"forse"},
+ {id:"orto-mer",k:"ora",d:"mer",s:"16:00",e:"16:42",t:"Leo Ortolani",pub:"panini",poi:"panini",win:"Ticket 16:00–17:30",n:"Andare alle 16:00 in punto: alle 17:00 c'è Gerasi dall'altra parte della città. Porta il vinile della Canzoncina se l'hai preso.",c:["fumetti","ritiri"],st:"fisso",g:"orto",alt:"Libera su Eventbrite il ticket di gio 10:00"},
+ {id:"tomo-mg-mer",k:"ora",d:"mer",s:"16:30",e:"18:00",t:"Meet&greet Masterpiece Card Series Vol. 4",pub:"tomodachi",poi:"tomodachi",n:"Serve il Token dato all'acquisto del volume allo stand. Anche mer 10–12.",c:["giochi","eventi"],st:"forse",g:"tomo"},
+ {id:"gerasi",k:"ora",d:"mer",s:"17:00",e:"17:45",t:"Sergio Gerasi: stampa Dylan Dog",pub:"bonelli",poi:"bonelli",w:"PalaBonelli, Piazza Antelminelli",win:"17:00–18:00",n:"Già che ci sei: variant Dylan Dog 482bis e merch (vedi Da comprare).",c:["fumetti"],st:"fisso",b:"Tassativo"},
+ {id:"naruto",k:"ora",d:"mer",s:"18:15",e:"19:00",t:"Tutorial Naruto Card Game",pub:"lucca",poi:"naruto",w:"Piazza Santa Maria",n:"Al tutorial danno la Chakra Card CP-001. Piazza Santa Maria è sulla strada del parcheggio.",c:["tcg","eventi"],st:"forse",b:"Lista d'attesa"},
+
+ /* ===== GIOVEDÌ ===== */
+ {id:"arr-gio",k:"ora",d:"gio",s:"08:15",e:"08:20",t:"Arrivo al parcheggio",pub:"lucca",poi:"park",w:"Parcheggio a nord di Porta Santa Maria",n:"Dritti a Scott's, Oratorio di San Giuseppe (Piazza Antelminelli 5): la vendita apre alle 9:00.",c:[],st:"fisso"},
+ {id:"scotts-vendita",k:"ora",d:"gio",s:"08:45",e:"09:30",t:"Scott's: acquisto Ultimate Spider-Man #1 foil + token",pub:"scotts",poi:"scotts",w:"Artist Alley Scott's, Oratorio di San Giuseppe, Piazza Antelminelli 5",win:"Vendita dalle 9:00 · 70 copie · fila dedicata",n:"Un solo acquisto a persona. Con l'albo ricevi ricevuta digitale e token numerato a tuo nome: servono tutti e tre per il firmacopie. La fila si chiude a 70 copie esaurite. Niente file autogestite o presidi notturni.",c:["fumetti"],st:"fisso",b:"Priorità"},
+ {id:"cuello",k:"ora",d:"gio",s:"09:40",e:"10:30",t:"BAO: Daniel Cuello (Stato avanzato variant)",pub:"bao",poi:"nap1",w:"Padiglione Napoleone, stand NAP312",win:"Sessione dalle 10:00, circa 90 minuti, fila limitata",n:"Serve la variant di Stato avanzato (comprala mercoledì). Alle 10:30 apre la fila del firmacopie Scott's: torna lì entro le 10:40 anche se la fila BAO è lunga.",c:["fumetti"],st:"scelto",b:"Fila non garantita"},
+ {id:"pp-gio",k:"ora",d:"gio",s:"09:30",e:"10:00",t:"Pastrovicchio + Perissinotto (Street Sharks #1 A e B)",pub:"mirage",poi:"mirage",win:"Solo 9:30–10:30",n:"Solo se non fatti mercoledì.",c:["fumetti","ritiri"],st:"forse",g:"pp",alt:"Se non fatti mer 10:15"},
+ {id:"mirage-tris",k:"ora",d:"mer",s:"15:27",e:"15:55",t:"Medel, Unzueta, Bendis",pub:"mirage",poi:"mirage",w:"Monografico Mirage/Shockdom, Piazzale Verdi",win:"Mer: Medel e Unzueta 15-19, Bendis 15-17:30 (pausa 13-15)",n:"Street Sharks Annual (Medel), Star Trek: Defiant vol. 1 ULV (Unzueta), Star Trek 60° Deluxe variant (Bendis).",c:["fumetti","ritiri"],st:"fisso"},
+ {id:"orto-gio",k:"ora",d:"gio",s:"10:00",e:"10:50",t:"Leo Ortolani",pub:"panini",poi:"panini",win:"Ticket 10:00–11:30",n:"Tieni mercoledì: questo ticket va liberato su Eventbrite.",c:["fumetti","ritiri"],st:"salto",g:"orto",b:"Da liberare su Eventbrite"},
+ {id:"tomo-mg-gio",k:"ora",d:"gio",s:"10:00",e:"12:00",t:"Meet&greet Masterpiece Card Series Vol. 4",pub:"tomodachi",poi:"tomodachi",n:"Serve il Token dato all'acquisto del volume. Anche gio 16–18.",c:["giochi","eventi"],st:"forse",g:"tomo",span:true},
+ {id:"scotts",k:"ora",d:"gio",s:"10:40",e:"12:30",t:"Scott's: firmacopie Hickman + Checchetto",pub:"scotts",poi:"scotts",w:"Artist Alley Scott's, Oratorio di San Giuseppe",win:"Fila dalle 10:30 (non prima) · firme 11:00–12:30",n:"Obbligatori: albo acquistato, token fisico numerato (con il nome registrato), ricevuta digitale. Si firma solo l'albo dell'evento: niente selfie, dediche o altri oggetti. Un solo accesso, il token viene ritirato. Per il resto dell'Artist Alley si rientra dalla fila normale.",c:["fumetti"],st:"fisso",b:"Priorità"},
+ {id:"dg-gio1",k:"ora",d:"gio",s:"11:00",e:"12:00",t:"saldaPress: Carmine Di Giandomenico",pub:"salda",poi:"nap2",win:"11:00–13:00",n:DGNOTE,c:["fumetti"],st:"forse",g:"dg",alt:"Alternativa a gio 16:00",b:"15 doodle a sessione"},
+ {id:"carducci",k:"ora",d:"gio",s:"12:45",e:"16:45",t:"Padiglione Carducci: mezza giornata (Magic, TCG, librigame, giochi)",pub:"giochi",poi:"carducci",w:"Padiglione Carducci",n:"Pranzo lì vicino (Games Cafè / punti ristoro sul viale). Esci alle 16:45 per Simmonds. ManaTrust CAR413 (playmat Fichera), RoundTwo CAR244 (Pixel, Storie di Videogame), Need Games CAR347 (TALES.01, Fabula Ultima Bestiario variant Amano), Mattomarinaio CAR161 (vinile Canzoncina), Gundam Card Game da Gametrade (mazzo demo omaggio), artisti Magic.",c:["tcg","giochi"],st:"scelto"},
+ {id:"recchioni",k:"ora",d:"mer",s:"14:15",e:"14:40",t:"Roberto Recchioni (Paladino's #1 blank cover)",pub:"mirage",poi:"mirage",w:"Monografico Mirage/Shockdom, Piazzale Verdi",win:"14:00–15:30 (mer e gio)",n:"Spostato a mercoledì per liberare giovedì. Poi Tarragona al Giglio e di nuovo qui per Medel, Unzueta e Bendis dalle 15.",c:["fumetti","ritiri"],st:"fisso"},
+ {id:"civitelli",k:"ora",d:"gio",s:"15:00",e:"15:50",t:"Fabio Civitelli: stampa di Tex",pub:"bonelli",poi:"bonelli",w:"PalaBonelli, Piazza Antelminelli",win:"15:00–16:00",n:"Si sovrappone alla mezza giornata al Carducci. Non confondere con le sue firme normali (10-11 e 18-19).",c:["fumetti"],st:"forse"},
+ {id:"giga-30strisce",k:"ora",d:"gio",s:"15:00",e:"16:00",t:"Gigaciao: 30 strisce in 30 minuti",pub:"gigaciao",poi:"sanromano",w:"Auditorium San Romano",n:"Con le musiche di Sio e Fabio Antonelli.",c:["fumetti","eventi"],st:"forse"},
+ {id:"azaceta-gio",k:"ora",d:"gio",s:"15:00",e:"17:30",t:"saldaPress: Paul Azaceta",pub:"salda",poi:"nap2",win:"15:00–17:30",c:["fumetti"],st:"forse",span:true},
+ {id:"tales",k:"ora",d:"gio",s:"15:30",e:"16:30",t:"Panel TALES (ITOMI + Luca Occhi)",pub:"giochi",poi:"carducci",w:"Palco Carducci",c:["giochi","eventi"],st:"forse"},
+ {id:"dg-gio2",k:"ora",d:"gio",s:"16:00",e:"16:45",t:"saldaPress: Di Giandomenico (Manaya in anteprima)",pub:"salda",poi:"nap2",win:"16:00–18:00",n:DGNOTE,c:["fumetti"],st:"forse",g:"dg",b:"15 doodle a sessione"},
+ {id:"simmonds",k:"ora",d:"gio",s:"17:00",e:"18:15",t:"Martin Simmonds (G.I. Joe #1 variant)",pub:"panini",poi:"panini",win:"Ticket 17:00–18:30",n:"Porta anche Il fantasma dell'opera.",c:["fumetti","ritiri"],st:"fisso"},
+ {id:"sfida",k:"ora",d:"gio",s:"17:30",e:"19:00",t:"Mirage: Sfida 11 vs 11 (panel)",pub:"mirage",poi:"sanromano",w:"Auditorium San Romano",c:["eventi","fumetti"],st:"forse"},
+ {id:"nazzi",k:"ora",d:"gio",s:"18:00",e:"19:00",t:"Stefano Nazzi: podcast Bonelli × Il Post",pub:"bonelli",poi:"sanfrancesco",w:"Auditorium San Francesco",c:["eventi","fumetti"],st:"forse"},
+
+ /* ===== IN GIORNATA (senza orario) ===== */
+ {id:"zeta",k:"giorno",d:"both",t:"Ritiro ZETA: A Space Cosmic Opera (ticket 03/40, 20 €)",pub:"altri",poi:"agora",w:"Self Area, Biblioteca Agorà, stand SA20 (Schiuma Fumetti)",n:"Qualsiasi ora, mercoledì o giovedì. Pagamento alla consegna. Chiedere uno sketch.",c:["ritiri","fumetti"],st:"fisso",price:20},
+ {id:"scotts-aa",k:"giorno",d:"both",t:"Scott's Artist Alley: sketch e originali",pub:"scotts",poi:"scotts",w:"Oratorio di San Giuseppe",n:"Simmonds mer e gio 9-15:30 · Charlie Adlard solo gio 9-15:30 · Checchetto mer 14:30-15:30 · Kennedy Johnson, Campbell, Coello, Condon. Griglia completa in Editori.",c:["fumetti"],st:"forse"},
+ {id:"pokemon",k:"giorno",d:"both",t:"Pokémon 30°: Play Lab e Pokémon Store",pub:"pokemon",poi:"pokemon",w:"Palestra Bacchettoni",n:"Al Play Lab impari il TCG e porti a casa un mini mazzo esclusivo. Pop-up Pokémon × Dolly Noire solo Lucca.",c:["tcg"],st:"forse"},
+ {id:"cart",k:"giorno",d:"both",t:"Cart Gallery: Darick Robertson, Chris Weston",pub:"autori",poi:"tgiglio",w:"Piazza del Giglio",n:"Firme e commission.",c:["fumetti"],st:"forse"},
+ {id:"miller",k:"giorno",d:"both",t:"Concorso disegni Frank Miller",pub:"panini",poi:"panini",w:"Stand Marvel / DC, Padiglione Panini",n:"Almeno 50 € di prodotti Marvel o DC → codice via SMS/WhatsApp (Marvel 345 541 3858 · DC 342 958 8008) 9:00-15:00. Ritiro premio 16:00-16:30.",c:["fumetti","eventi"],st:"forse"},
+ {id:"iron-print",k:"giorno",d:"both",t:"Iron Studios: art print di Márcio Hum! + giveaway",pub:"iron",poi:"osservanti",w:"Giardino degli Osservanti",n:"Una stampa diversa ogni giorno, solo 50 copie al giorno, con l'artista: meglio la mattina. Giveaway: scansiona il QR allo stand per la statua Doctor Doom on Throne.",c:["figure"],st:"scelto",b:"50 stampe al giorno"},
+
+ /* ===== DA COMPRARE ===== */
+ {id:"c-bao",k:"compra",d:"both",t:"Esclusive BAO: poster e pin Zerocalcare, Stato avanzato variant",pub:"bao",poi:"nap1",w:"Padiglione Napoleone, stand NAP312",n:"Poster 30x42 (2000 copie numerate) 10 €, pin smaltata 10 €, Stato avanzato variant Cuello (1000 copie) a prezzo di copertina: serve per la firma di Cuello giovedì. Quantità giornaliere: meglio mercoledì al primo passaggio in Napoleone.",c:["fumetti"],st:"scelto",price:20},
+ {id:"c-salda-uc",k:"compra",d:"mer",t:"Undiscovered Country (un volume tra 1 e 6)",pub:"salda",poi:"nap2",w:"Padiglione Napoleone 2",n:"Obbligatorio per la sessione di Camuncoli (mer 13:00).",c:["fumetti"],st:"scelto"},
+ {id:"c-salda-dg",k:"compra",d:"both",t:"Manaya / Super Creepshow / Transformers #1 variant Di Giandomenico",pub:"salda",poi:"nap2",w:"Padiglione Napoleone 2",n:"Uno dei tre è obbligatorio per entrare da Di Giandomenico. Manaya in anteprima a Lucca (in libreria dal 27/11); Super Creepshow cartonato 23 €.",c:["fumetti"],st:"scelto"},
+ {id:"c-dd482",k:"compra",d:"both",t:"Dylan Dog 482bis variant + merch Dylan Dog",pub:"bonelli",poi:"bonelli",w:"PalaBonelli, Piazza Antelminelli",n:"Variant a tiratura limitata, lucidatura nera tono su tono (Mignacco / Torti, cover Cestaro). Merch: telo, cappellino nero, portachiavi in metallo, tazza nera Ritratto. Comodo mercoledì alle 17 con Gerasi.",c:["fumetti"],st:"scelto"},
+ {id:"c-blueocean",k:"compra",d:"both",t:"Blue Ocean × Gigaciao: 4 variant con minifigure LEGO",pub:"gigaciao",poi:"nap2",w:"Padiglione Napoleone 2, stand Gigaciao (probabile)",n:"Variant di Dado, Sio, Fraffrog e un quarto autore. 999 copie, edizione limitata, firmacopie e tote bag. Prezzo non indicato.",c:["fumetti","figure"],st:"scelto",b:"999 copie"},
+ {id:"c-vinile",k:"compra",d:"both",t:"Vinile \"La Canzoncina\" (copertina di Leo Ortolani)",pub:"lucca",poi:"anniv",w:"Anniversary Point piazza del Giglio o piazza Bernardini · Carducci stand Mattomarinaio CAR161",n:"Disco di Massimiliano Poggi per i 60 anni, colori di Larry, copie numerate. Da far firmare a Ortolani.",c:["fumetti"],st:"scelto",b:"Tiratura numerata"},
+ {id:"c-iron",k:"compra",d:"both",t:"Iron Studios: esclusive evento",pub:"iron",poi:"osservanti",w:"Giardino degli Osservanti",n:"MiniCo Doctor Doom Chromatic, TMNT Sewer, Walt Disney (35 € l'una), Wonder Woman Trinity 1/10 (280 €). Braccialetto omaggio a ogni acquisto, pin evento sopra 250 €.",c:["figure"],st:"scelto"},
+ {id:"c-gunpla",k:"compra",d:"mer",t:"Gunpla Gundam Base: RG Apex Legends e limited GBase",pub:"bandai",poi:"gbase",w:"Piazza San Frediano",n:"RG Wing Zero EW Valkyrie Ver., RG Freedom Crypto Ver., RG Epyon Alter Ver. Con 40 € di spesa: shopper personalizzata.",c:["figure"],st:"scelto"},
+ {id:"c-seiya",k:"compra",d:"mer",t:"Tamashii: Sagittarius Seiya [God Cloth] Myth EX",pub:"bandai",poi:"tamashii",w:"Stand Bandai Namco / Tamashii × Cosmic Group",n:"Event exclusive \"in preorder\": chiedere allo stand.",c:["figure"],st:"forse"},
+ {id:"c-playmat",k:"compra",d:"gio",t:"Playmat ManaTrust Lucca60 Legacy (Diego Fichera)",pub:"giochi",poi:"carducci",w:"Padiglione Carducci, stand CAR413",n:"Limited edition esclusiva Lucca. Prezzo non indicato.",c:["tcg"],st:"scelto"},
+ {id:"c-fabula",k:"compra",d:"gio",t:"Fabula Ultima Bestiario Vol. I, variant Yoshitaka Amano",pub:"giochi",poi:"carducci",w:"Need Games, Padiglione Carducci CAR347",c:["giochi"],st:"forse"},
+ {id:"c-tora",k:"compra",d:"mer",t:"Tora: «Cosa fare a Lucca quando sei morto…» (Ultima Forsan)",pub:"tora",poi:"nap1",w:"Padiglione Napoleone, stand 411",n:"Volume speciale Lucca60 di Mauro Longo e Alessandro Pietramolla. Altri Tora: Solum Ego (box Lucca60, Licia Troisi), Aki vol. 2.",c:["giochi"],st:"scelto"},
+ {id:"c-librarsi",k:"compra",d:"both",t:"Librarsi: Il Cronomante + Cuore di Ghiaccio",pub:"giochi",w:"Stand Librarsi (da verificare)",n:"Il Cronomante (Alex Calvi) e Cuore di Ghiaccio (Dave Morris, Heart of Ice), collana Sci-Fi Game, 16 € l'uno.",c:["giochi"],st:"scelto",price:32},
+ {id:"c-astoroth",k:"compra",d:"both",t:"Aristea: Astoroth (Fiabe Oscure vol. 3), edizione limitata",pub:"giochi",w:"Stand Aristea (probabile Carducci)",n:"Con dice tower in legno + stampa firmata.",c:["giochi"],st:"forse"},
+ {id:"c-roundtwo",k:"compra",d:"gio",t:"RoundTwo: Pixel, Storie di Videogame vol. 3 · TALES.01",pub:"giochi",poi:"carducci",w:"Carducci CAR244 / CAR347",c:["giochi"],st:"forse"},
+ {id:"c-masterpiece",k:"compra",d:"both",t:"Masterpiece Card Series Vol. 4 (Alice)",pub:"tomodachi",poi:"tomodachi",w:"Stand Tomodachi Press",n:"Con l'acquisto ricevi il Token per il meet&greet.",c:["giochi"],st:"forse"},
+ {id:"c-burba",k:"compra",d:"both",t:"Feltrinelli Comics: L'ultima burba di Leo Ortolani",pub:"altri",w:"Stand Feltrinelli Comics (da verificare)",n:"Da portare alla firma di Ortolani.",c:["fumetti"],st:"forse"},
+ {id:"c-lovecraft",k:"compra",d:"both",t:"Lo Scarabeo: Lovecraft, Cinque strade nella follia",pub:"altri",w:"Stand Lo Scarabeo (da verificare)",n:"Antologia a fumetti, presenza a Lucca da confermare.",c:["fumetti"],st:"forse"},
+ {id:"c-blokees",k:"compra",d:"both",t:"Blokees: model kit Darth Vader e Bumblebee",pub:"altri",poi:"osservanti",w:"Giardino degli Osservanti",c:["figure"],st:"forse"}
+];
+
+/* sessioni generate: finestre lunghe in Forse */
+const S=(pub,poi,w,c,n)=>([d,s,e,nm],i,arr)=>EVENTS.push({id:`${pub}-${d}-${i}`,k:"ora",d,s,e,t:nm,pub,poi,w,win:`${s}–${e}`,n,c,st:"forse",span:true});
+[["mer","10:00","13:00","Gigaciao: Sio"],["mer","10:30","13:30","Gigaciao: Fraffrog"],["mer","11:00","13:00","Gigaciao: Dado"],["mer","13:30","15:30","Gigaciao: Lorro & Nick"],["mer","13:30","15:30","Gigaciao: Spugna & La Neve"],["mer","13:30","15:30","Gigaciao: DAW"],["mer","15:30","17:30","Gigaciao: Giacomo Keison Bevilacqua"],["mer","15:30","17:30","Gigaciao: Fraffrog"],["mer","16:00","19:00","Gigaciao: Sio"],["mer","16:00","18:00","Gigaciao: Dado"],["mer","16:00","18:00","Gigaciao: Savuland"],["mer","17:00","19:00","Gigaciao: Quasirosso"],["mer","17:00","18:00","Gigaciao: Loputyn"],
+ ["gio","10:00","12:00","Gigaciao: Inntale"],["gio","10:30","13:30","Gigaciao: Fraffrog"],["gio","11:00","14:00","Gigaciao: Sio"],["gio","11:00","13:00","Gigaciao: Dado"],["gio","11:00","13:00","Gigaciao: Savuland"],["gio","12:00","14:00","Gigaciao: DAW"],["gio","14:00","16:00","Gigaciao: Lorro & Nick"],["gio","14:00","16:00","Gigaciao: Spugna & La Neve"],["gio","14:00","16:00","Gigaciao: Dottor Pira"],["gio","15:30","17:30","Gigaciao: Giacomo Keison Bevilacqua"],["gio","15:30","17:30","Gigaciao: Fraffrog"],["gio","16:00","18:00","Gigaciao: DAW"],["gio","16:00","18:00","Gigaciao: Quasirosso"],["gio","16:00","18:00","Gigaciao: Loputyn"]
+].forEach(S("gigaciao","nap2","Padiglione Napoleone 2, stand Gigaciao",["fumetti"],"Firmacopie allo stand Gigaciao."));
+[["mer","10:30","11:00","La fine del mondo: Shintaro Kago"],["mer","11:00","13:00","La fine del mondo: Maicol & Mirco"],["mer","14:00","16:00","La fine del mondo: Paolo Bacilieri"],["mer","16:30","17:30","La fine del mondo: Eliana Albertini"],["mer","17:30","18:30","La fine del mondo: Zerocalcare"],
+ ["gio","09:30","10:30","La fine del mondo: Martina Sarritzu"],["gio","10:30","11:00","La fine del mondo: Shintaro Kago"],["gio","11:00","13:00","La fine del mondo: Maicol & Mirco"],["gio","14:00","15:00","La fine del mondo: Martina Sarritzu"],["gio","14:00","16:00","La fine del mondo: Paolo Bacilieri"],["gio","17:30","18:30","La fine del mondo: Zerocalcare"]
+].forEach(S("lfdm","nap1","Padiglione Napoleone, stand NAP111",["fumetti"],"Dediche sulla rivista La fine del mondo (il manifesto). Stand NAP111, diverso da BAO (NAP312)."));
+[["mer","09:00","16:00","Tora: Davide Toccafondi (Aki vol. 2)"],["mer","13:00","16:00","Tora: Mauro Longo (Cosa fare a Lucca quando sei morto)"],["gio","09:00","10:00","Tora: Paolo Barbieri"],["gio","10:00","12:00","Tora: Alberto Dal Lago (cover artist)"],["gio","12:00","15:00","Tora: Davide Toccafondi (Aki)"],["gio","13:00","15:00","Tora: Francesca Della Penna (Aki)"]
+].forEach(S("tora","nap1","Padiglione Napoleone, stand Tora 411",["giochi"],"Firmacopie allo stand Tora."));
+[["mer","12:00","13:30","Paolo Barbieri: firme Topolino (ticket Eventbrite esaurito)","panini"],["mer","14:00","15:30","Paolo Barbieri: PalaBonelli (Trent'anni di disegni sbagliati)","bonelli"],["mer","18:00","19:00","Paolo Barbieri: presentazione Il Quinto","sanromano"],["gio","10:30","11:30","Paolo Barbieri: firme Topolino (ticket Eventbrite esaurito)","panini"],["gio","14:45","15:30","Paolo Barbieri: firme Il Quinto","sanmartino"],["gio","16:00","17:30","Paolo Barbieri: PalaBonelli (Trent'anni di disegni sbagliati)","bonelli"],
+ ["mer","16:00","17:00","Simone Bianchi (dalle 16)","giglio"],["gio","16:00","17:00","Simone Bianchi (dalle 16)","giglio"],
+ ["mer","14:00","15:15","Gabrielle Croix: Il Museo dei Vampiri (Rebelle, stand 202)","nap1"],["gio","14:00","16:00","Gabrielle Croix: Il Museo dei Vampiri (Rebelle, stand 202)","nap1"]
+].forEach(([d,s,e,t,poi],i)=>EVENTS.push({id:`aut-${i}`,k:"ora",d,s,e,t,pub:"autori",poi,w:POI[poi][2],win:`${s}–${e}`,c:["fumetti"],st:"forse",span:true}));
+
+/* ---------- info per la vista Editori ---------- */
+const T=(head,rows)=>`<div class="tw"><table><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</table></div>`;
+const INFO={
+ mirage:`<h4>Ticket Priority Plus (preordine)</h4>`+T(["Artista","Volume","Mer 28","Gio 29"],[
+  ["Recchioni","Paladino's #1 blank","Monografico 14-15:30","Monografico 14-15:30"],["Bendis","Star Trek 60° Deluxe","9:30-13 · 15-17:30","9:30-13 · 15-17"],["Unzueta","Star Trek: Defiant 1 ULV","9:30-13:30 · 15-19","9:30-13:30 · 15-17"],["Medel","Street Sharks Annual","9:30-13:30 · 15-19","9:30-13:30 · 15-17"],["Pastrovicchio","Street Sharks #1 A","9:30-10:30 (poi Giglio 11-16)","9:30-10:30 (Giglio 12:30-14 · 15-17)"],["Perissinotto","Street Sharks #1 B","9:30-10:30 (poi Giglio 11-19)","9:30-10:30 (Giglio 11-17)"],["Tarragona","Masters of Comics: Legacy","solo Giglio 9:30-19","solo Giglio 9:30-17"]])+
+ `<p>Il calendario di Recchioni (mer e gio): Feltrinelli 10-11:30 · Bonelli 12-13 · Mirage 14-15:30 · Feltrinelli 16-17:30. Stand GGL113 nel Padiglione Giglio con 12 novità e variant esclusive.</p>`,
+ panini:`<h4>Ticket Eventbrite</h4><ul><li>Presi: Ortolani mer 16:00 e gio 10:00 (uno da liberare), Simmonds gio 17:00.</li><li>Esauriti: Miller, Barbieri, Camp, Di Meo, Hickman, Morian, Pastrovicchio, Checchetto, Castellini.</li></ul><h4>Novità</h4><ul><li>Topolino 3701 variant Barbieri 8 €, 3702 variant Faccini 9 €.</li><li>Ortolani: Rat-Man La minaccia reale (2 cover + mazzo).</li><li>Miller: Daredevil Rinascita e DKR 40° con cover inedite, TMNT 21 variant, Lone Wolf & Cub Omnibus 1 variant.</li><li>30 anni di PK, stand Warhammer al Carducci.</li></ul>`,
+ bonelli:`<p>Regole (anni scorsi): volumi da libreria = acquisto, albi da edicola = solo firma, stampe = un tagliando a testa, mettersi in fila in anticipo.</p><h4>Mercoledì 28</h4><ul><li>10:30-12:30 Enoch, Vietti (Dragonero)</li><li>11:00-13:00 Civitelli (Tex)</li><li>12:00-13:00 Recchioni (Dylan Dog)</li><li>14:00-15:00 Ferniani (Dragonero); Zoni (Nathan Never)</li><li>14:00-15:30 Barbieri; Enoch, Vietti</li><li>15:00-16:00 Flavia Biondi</li><li>15:00-16:30 Gerasi (Dylan Dog, Eternity)</li><li>15:30-17:00 Furnò (Dylan Dog)</li><li>16:00-17:00 Dall'Oglio (Nathan Never)</li><li>16:30-18:00 Stano (Dylan Dog); Pagliarani (Dragonero)</li><li><b>★ 17:00-18:00 Gerasi, stampa Dylan Dog</b></li><li>18:00-19:00 Sedioli, Verni (Zagor); Barone</li></ul><h4>Giovedì 29</h4><ul><li>10:00-11:00 Sedioli, Verni; Furnò; Civitelli</li><li>11:00-12:00 Cavazzano (Lucky Luke); Biondi; Zoni; Enoch, Vietti</li><li>12:00-13:00 Stano, Recchioni</li><li>12:00-13:30 Gerasi; Pagliarani</li><li>14:00-15:00 Sedioli, Verni; Biondi</li><li>15:00-16:00 Gerasi; Pagliarani; Furnò</li><li><b>★ 15:00-16:00 Civitelli, stampa di Tex</b></li><li>16:00-17:00 Cavazzano, Nucci; Dall'Oglio</li><li>16:00-17:30 Barbieri</li><li>17:00-18:00 Stano; Zoni; Barone</li><li>17:30-19:00 Enoch, Vietti</li><li>18:00-19:00 Civitelli; Ferniani</li></ul><p>Novità: crossover Odissea nel tempo (Zagor, Martin Mystère, Nathan Never), Montagna, 40 anni di Dylan Dog.</p>`,
+ salda:T(["Autore","Mer 28","Gio 29"],[["Di Giandomenico","11-13","11-13 · 16-18"],["Paul Azaceta","15-17:30","15-17:30"],["Camuncoli","13-14:30","–"],["Tanzillo","14-16:30","11-13 · 16-18"],["Foderà","16-18","11-13"],["Bertolucci","–","13:30-16"]])+`<p>Di Giandomenico: obbligo d'acquisto Manaya, Super Creepshow o TF #1 variant DG, 15 doodle. Camuncoli: obbligo Undiscovered Country 1-6, 10 doodle.</p><h4>Esclusive</h4><ul><li>Transformers #1 variant Dan Mora Optimus e Megatron (7 € l'una, bundle con 7 stampe), white cover 7 €, variant Di Giandomenico</li><li>Transformers vol. 5 variant DWJ · Battle Beast vol. 2 variant Ottley · Battle Beast #1 white cover</li><li>G.I. Joe #1 variant Simmonds 7 € · Godzilla vs America: Los Angeles</li></ul>`,
+ bao:`<p>Nessuna prenotazione: presentarsi un po' prima dell'inizio, sessioni di circa 90 minuti, serve un titolo BAO dell'autore. In calendario c'è solo Cuello giovedì alle 10:00.</p>`+T(["Autore","Mer 28","Gio 29","Libro"],[["Zerocalcare","10:00 · 15:00","10:00 · 15:00","–"],["Atzeni","16:30","10:00 · 16:30","Devo andare nello spazio"],["Cuello","16:30","10:00 · 16:30","Stato avanzato variant"],["Khoo","11:30","11:30","Terra o Luna"],["Lafebre","16:30","11:30 · 16:30","Nonostante tutto"],["LRNZ","15:00","10:00 · 15:00","–"],["Maicol & Mirco","14:30","16:30","Pinocchio"],["Petruccioli","15:00","11:30 · 15:00","–"],["Razzoli","11:30 · 15:00","11:30 · 15:00","–"],["Scalera","11:30 · 15:00","–","Black Science 1"],["Tillie Walden","15:00","10:00 · 15:00","–"]])+`<h4>Altre esclusive</h4><ul><li>Una vita tra i margini variant (Tatsumi) e Il quarto padre variant (Murphy), 500 copie</li><li>Cofanetto Cuello: 10 €, 5 € con 2 volumi, gratis con 3</li><li>Shikishi La tigre delle nevi, plate L'ultimo anno della volpe</li></ul>`,
+ gigaciao:`<h4>Novità</h4><ul><li>GigaClassici 1: Alice nel paese delle meraviglie (Quasirosso)</li><li>Casa Gigaciao (Daw, variant cover Sio) · Il Giro del freddo (Nick, Lorro e Sio)</li><li>Evviva che bello! Verde (Sio) · Rupert, una rana a scuola (Fraffrog) · Dragon Village (Dado)</li><li>A Panda Piace… scoprire i suoi poteri (Bevilacqua) · Che Divertimenti! con Topo e Papero (Dr. Pira)</li><li>Francis edizione decennale + peluche Kendal (Loputyn) · Navigavia 1-2 (Inntale)</li></ul><h4>Blue Ocean × Gigaciao</h4><p>4 variant con minifigure LEGO (Dado, Sio, Fraffrog + un quarto autore), 999 copie, firmacopie e tote bag.</p>`,
+ lfdm:`<p>Rivista di Maicol & Mirco con il manifesto. Le dediche sono in calendario come Forse. Con Zerocalcare mer e gio 17:30-18:30.</p>`,
+ tora:`<ul><li>Novità: «Cosa fare a Lucca quando sei morto…» (Ultima Forsan, Longo/Pietramolla) · Aki – La montagna incantata vol. 2 (Toccafondi/Della Penna) · Solum Ego (box Lucca60, Troisi)</li><li>Pietramolla firma solo venerdì e sabato.</li></ul>`,
+ scotts:`<h4>Mercoledì 28</h4><p><b>9-12:</b> Adiletto, Campbell, Fiorelli, Frenda, Mazzei, Mazzoli, Nesi, Paratore, Kennedy Johnson, Ragazzoni, Scalmazzi, Simmonds, Zefiro<br><b>12:30-15:30:</b> Adiletto, Checchetto (14:30-15:30), Fiorelli, Coello (dalle 14), Frenda, Mazzei, Mazzoli, Messina, Nesi, Paratore, Kennedy Johnson, Ragazzoni, Scalmazzi, Simmonds, Zefiro<br><b>16-19:</b> Adiletto, Campbell, Coello, Fiorelli, Frenda, Mazzei, Mazzoli, Nesi, Paratore, Scalmazzi, Zefiro</p><h4>Giovedì 29</h4><p><b>9-12:</b> Adlard, Blanco, Campbell, Coello, Condon, Nesi, Paratore, Kennedy Johnson, Ragazzoni, Riccardi, Scalmazzi, Simmonds, Zefiro<br><b>12:30-15:30:</b> Adlard, Campbell, Coello, Condon, Checchetto (fino alle 13), Fiorelli, Frenda, Mazzei, Mazzoli, Messina, Paratore, Kennedy Johnson, Robaldo, Simmonds, Zefiro<br><b>16-19:</b> Adiletto, Blanco, Cappuccio, Coello, Fiorelli, Frenda, Mazzei, Mazzoli, Messina, Nesi, Ragazzoni, Robaldo, Scalmazzi, Zagaria</p><p>Presenze soggette a variazioni.</p>`,
+ tomodachi:`<p>Meet&greet solo per il Vol. 4 con il Token dato all'acquisto: mer 10-12 / 16:30-18, gio 10-12 / 16-18.</p>`,
+ autori:`<p>Barbieri: anche Tora mer 9:30-11 e gio 9-10. Simone Bianchi firma solo al Padiglione Giglio, mer-sab dalle 16. Gabrielle Croix anche panel mer 15:30 Cinema Astra e gio 10:30 / 11:45.</p>`,
+ bandai:`<ul><li>Gundam Base: RG Apex Legends (Wing Zero EW, Freedom, Epyon) + limited GBase. Gadget gratis: coroncina, Action Base 1 (sondaggio), Gunpla 40th logo (social), shopper con 40 €.</li><li>Tamashii: due sedi (Bandai Namco + Cosmic Group in Piazza Santa Maria), Sagittarius Seiya God Cloth event exclusive.</li><li>Bandai Card Games in Piazza Santa Maria: Naruto, One Piece, Dragon Ball, Gundam, Digimon.</li></ul>`,
+ iron:`<p>MiniCo 35 € (Doctor Doom Chromatic, TMNT Sewer, Walt Disney), Wonder Woman Trinity 1/10 280 €. Braccialetto a ogni acquisto, pin sopra 250 €, 50 art print al giorno di Márcio Hum!, giveaway Doctor Doom on Throne.</p>`,
+ giochi:`<h4>Stand al Carducci</h4><ul><li>CAR413 ManaTrust: playmat Fichera</li><li>CAR244 RoundTwo: Pixel, Storie di Videogame</li><li>CAR347 Need Games: TALES.01, Fabula Ultima Bestiario variant Amano</li><li>CAR161 Mattomarinaio: vinile Canzoncina</li><li>Gametrade: Gundam Card Game, mazzo demo omaggio</li></ul><h4>Artisti Magic</h4><p>Rebecca Guay (Elspeth, Campionessa del Sole, SLC #2013), Scott M. Fischer, Evyn Fong, Alexis Ziritt, Marta Nael, Justine Jones, Paolo Parente, Domenico Cava, Karl Kopinski (Wizards/Boose); Lucas Graciano, Ryan Pancoast, Steve Prescott (Galactus). Stand e orari non pubblicati.</p><h4>Le mie carte Magic</h4><p><b>Dalla mia collezione:</b> Elspeth, Campionessa del Sole (Rebecca Guay). Lista da completare.<br><b>Da trovare in fiera:</b> lista da completare.</p>`,
+ pokemon:`<p>Carta Pikachu Lucca60 ai Card Distribution Points (Welcome desk Santa Croce e altri) con biglietto + braccialetto. Palestra Bacchettoni: Play Lab con mini mazzo esclusivo, Pokémon Store.</p>`,
+ lucca:`<ul><li>Go Nagai: prenotazione non riuscita, voucher avanzati mer 13:30 a Piazzale Verdi.</li><li>Naruto Card Game: tutorial mer 18:15 in lista d'attesa.</li><li>Anniversary Point: piazza del Giglio e piazza Bernardini (vinile Canzoncina).</li></ul>`,
+ altri:``
+};
+
+/* ---------- stato ---------- */
+const KEY="lucca26-app-v2";
+let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){saved={}}
+const ui={tab:saved.tab||"cal",day:saved.day||"mer",mode:saved.mode||"opzioni",cat:saved.cat||"all",open:null,pubOpen:{},poi:null,zoom:saved.zoom||1,mapPlan:saved.mapPlan!==false};
+const state=Object.assign({},saved.state||{});
+const done=Object.assign({},saved.done||{});
+const today=new Date();
+if(today.getFullYear()===2026&&today.getMonth()===9){if(today.getDate()===28)ui.day="mer";if(today.getDate()===29)ui.day="gio";}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify({tab:ui.tab,day:ui.day,mode:ui.mode,cat:ui.cat,zoom:ui.zoom,mapPlan:ui.mapPlan,state,done}))}catch(e){}}
+const st=ev=>state[ev.id]||ev.st;
+const isActive=ev=>{const s=st(ev);return s==="fisso"||s==="scelto"};
+const min=t=>{const[h,m]=t.split(":").map(Number);return h*60+m};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const byId=id=>EVENTS.find(x=>x.id===id);
+const onDay=(e,d)=>e.d===d||e.d==="both";
+
+/* ---------- componenti ---------- */
+function optHTML(e,o={}){
+  const s=st(e),open=ui.open===e.id,isDone=!!done[e.id];
+  const tags=[];
+  if(e.b)tags.push(`<span class="tag${/verific|Solo|attesa|liberare|garantito|chiedere|esaurito|fino/i.test(e.b)?" warn":""}">${esc(e.b)}</span>`);
+  if(e.alt)tags.push(`<span class="tag">${esc(e.alt)}</span>`);
+  if(e.price)tags.push(`<span class="tag price">${e.price} €</span>`);
+  if(o.showDay&&e.d)tags.push(`<span class="tag">${DAYN[e.d]}</span>`);
+  const time=e.s?`<span class="times">${o.showDay&&e.d!=="both"?DAYN[e.d]+" · ":""}${e.s}–${e.e}</span>`:"";
+  const where=e.w||(e.poi&&POI[e.poi]?POI[e.poi][2]:"");
+  let det="";
+  if(open){
+    const rows=[["Dove",where],e.win?["Orario ufficiale",e.win]:null,["Editore",PUBS[e.pub]?PUBS[e.pub].n:""],e.n?["Note",e.n]:null].filter(r=>r&&r[1]);
+    det=`<div class="detail"><dl>${rows.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
+      <div class="acts">${Object.keys(STATES).map(k=>`<button class="act a-${k}" data-set="${k}" data-id="${e.id}" aria-pressed="${s===k}">${ICON[k]}${STATES[k]}</button>`).join("")}</div>
+      <div class="acts2"><button class="btn" data-done="${e.id}" aria-pressed="${isDone}">${ICON.check}${e.k==="compra"?"Comprato":"Fatto"}</button>${e.poi?`<button class="btn" data-gomap="${e.poi}">${ICON.pin}Vedi sulla mappa</button>`:""}</div></div>`;
+  }
+  const box=o.box?`<span class="box" data-done="${e.id}" role="checkbox" aria-checked="${isDone}" aria-label="Segna come fatto">${isDone?ICON.check:""}</span>`:"";
+  return `<div class="opt st-${s}${o.clash?" clash":""}${isDone?" done":""}"><div class="ohead${o.box?"":" nobox"}" data-open="${e.id}" role="button" tabindex="0" aria-expanded="${open}">${box}
+    <span>${time}<span class="ttl">${esc(e.t)}</span><span class="meta">${esc(PUBS[e.pub]?PUBS[e.pub].n+" · ":"")}${esc(where)}</span>${tags.length?`<span class="tags">${tags.join("")}</span>`:""}</span>
+    <span class="pill">${s==="fisso"?ICON.fisso:""}${STATES[s]}</span></div>${det}</div>`;
+}
+function fmtDur(m){const h=Math.floor(m/60),r=m%60;return h?`${h} h${r?" "+r+" min":""}`:`${r} min`}
+function clashPairs(list){const p=[];for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++)if(min(list[j].s)<min(list[i].e)&&min(list[i].s)<min(list[j].e))p.push([list[i],list[j]]);return p}
+
+/* ---------- sezioni ---------- */
+function renderCal(){
+  const dayAll=EVENTS.filter(e=>e.k==="ora"&&e.d===ui.day);
+  const inCat=e=>ui.cat==="all"||e.c.includes(ui.cat);
+  let list=dayAll.filter(inCat);
+  if(ui.mode==="piano")list=list.filter(isActive);
+  list.sort((a,b)=>min(a.s)-min(b.s)||min(a.e)-min(b.e));
+  const act=dayAll.filter(isActive).sort((a,b)=>min(a.s)-min(b.s));
+  const pairs=clashPairs(act),clash=new Set(pairs.flat().map(e=>e.id));
+  const clusters=[];
+  for(const ev of list){
+    const c=clusters[clusters.length-1];
+    const eEnd=ev.span&&!isActive(ev)?min(ev.s)+30:min(ev.e);
+    if(c&&min(ev.s)<c.end){c.items.push(ev);c.end=Math.max(c.end,eEnd)}
+    else clusters.push({start:min(ev.s),end:eEnd,items:[ev]});
+  }
+  let h=nowBanner(act);
+  h+=`<div class="summary"><span class="k-pin"><b>${dayAll.filter(e=>st(e)==="fisso").length}</b>fissi</span><span><b>${dayAll.filter(e=>st(e)==="scelto").length}</b>scelti</span><span><b>${dayAll.filter(e=>st(e)==="forse").length}</b>in forse</span><span class="k-clash"><b>${pairs.length}</b>sovrapposizioni</span></div>`;
+  h+=`<div class="legend"><span><i class="sw" style="background:var(--pin)"></i>Fisso</span><span><i class="sw" style="background:var(--go)"></i>Lo faccio</span><span><i class="sw" style="border:1px dashed var(--maybe)"></i>Forse</span><span><i class="sw" style="background:var(--clash)"></i>Sovrapposto</span><span>🚶 tempi a piedi stimati dalla mappa</span></div>`;
+  if(!clusters.length)h+=`<p class="empty">Niente in questa vista. Prova "Tutte le opzioni" o un altro interesse.</p>`;
+  let prev=null;
+  for(const c of clusters){
+    if(ui.mode==="piano"&&prev){
+      const a=prev.items[prev.items.length-1],b=c.items[0];
+      const gap=c.start-min(a.e),walk=walkMin(a.poi,b.poi);
+      if(walk||gap>=15){
+        const tight=walk>gap;
+        h+=`<div class="gap${tight?" tight":""}">${walk?`<span>🚶 ~${walk} min a piedi</span>`:""}<span>${gap>0?"libero "+fmtDur(gap):"nessun margine"}</span>${tight?"<span>tempo stretto</span>":""}</div>`;
+      }
+    }
+    prev=c;
+    const multi=c.items.length>1,cClash=c.items.some(e=>clash.has(e.id));
+    let inner=c.items.map(e=>optHTML(e,{clash:clash.has(e.id)})).join("");
+    if(multi)inner=`<div class="multi${cClash?" clash":""}"><div class="mhead">${cClash?"Sovrapposizione: scegline una":c.items.length+" opzioni nella stessa fascia"}</div>${inner}</div>`;
+    h+=`<section class="slot"><div class="rail">${c.items[0].s}</div><div class="block">${inner}</div></section>`;
+  }
+  const loose=EVENTS.filter(e=>e.k==="giorno"&&onDay(e,ui.day)&&isActive(e)&&!done[e.id]);
+  if(loose.length)h+=`<h2 class="sec">Da fare in giornata</h2><div class="block">${loose.map(e=>optHTML(e,{box:true})).join("")}</div>`;
+  return h+foot();
+}
+function nowBanner(act){
+  const d=new Date(),dayNum=ui.day==="mer"?28:29;
+  if(!(d.getFullYear()===2026&&d.getMonth()===9&&d.getDate()===dayNum))return"";
+  const m=d.getHours()*60+d.getMinutes();
+  const cur=act.filter(e=>min(e.s)<=m&&m<min(e.e)),next=act.find(e=>min(e.s)>m);
+  return `<div class="now"><span class="lbl">Adesso</span><span>${cur.length?cur.map(e=>esc(e.t)).join(" · "):"Niente in corso"}</span>${next?`<span><b>Prossimo ${next.s}</b> · ${esc(next.t)} · ${esc(next.w||POI[next.poi]?.[2]||"")}</span>`:""}</div>`;
+}
+function renderList(kind){
+  const items=EVENTS.filter(e=>e.k===kind&&onDay(e,ui.day)&&(ui.cat==="all"||e.c.includes(ui.cat)));
+  const groups=[["Da fare",items.filter(e=>isActive(e)&&!done[e.id])],["Forse",items.filter(e=>st(e)==="forse"&&!done[e.id])],[kind==="compra"?"Comprato":"Fatto",items.filter(e=>done[e.id])],["Saltati",items.filter(e=>st(e)==="salto"&&!done[e.id])]];
+  let h=`<p class="intro">${kind==="compra"?"Cose da comprare senza un orario fisso. Tocca il quadratino quando l'hai preso.":"Cose da fare in qualsiasi momento della giornata. Tocca il quadratino quando è fatto."} Vista: ${DAYN[ui.day]} (incluse quelle valide per entrambi i giorni).</p>`;
+  if(kind==="compra"){
+    const tot=items.filter(e=>isActive(e)&&e.price).reduce((a,e)=>a+e.price,0);
+    if(tot)h+=`<div class="summary"><span><b>${tot} €</b>spesa già nota per le cose segnate (le altre senza prezzo)</span></div>`;
+  }
+  for(const [name,arr] of groups){if(!arr.length)continue;h+=`<h2 class="sec">${name} · ${arr.length}</h2><div class="block">${arr.map(e=>optHTML(e,{box:true})).join("")}</div>`}
+  if(!items.length)h+=`<p class="empty">Niente per questo giorno e interesse.</p>`;
+  return h+foot();
+}
+function renderEditori(){
+  const order=Object.keys(PUBS);
+  let h=`<p class="intro">Tutto diviso per casa editrice, entrambi i giorni. Qui ci sono anche le cose che non sono in calendario, come le firme BAO.</p>`;
+  for(const p of order){
+    const items=EVENTS.filter(e=>e.pub===p).sort((a,b)=>(a.d===b.d?0:a.d==="mer"?-1:b.d==="mer"?1:a.d==="gio"?-1:1)||((a.s?min(a.s):9999)-(b.s?min(b.s):9999)));
+    if(!items.length&&!INFO[p])continue;
+    const open=!!ui.pubOpen[p];
+    const nAct=items.filter(isActive).length;
+    h+=`<section class="pub"><button class="pubhead" data-pub="${p}" aria-expanded="${open}"><span><span class="pubname">${esc(PUBS[p].n)}</span><br><span class="pubsub">${esc(PUBS[p].sub)}</span></span><span class="count">${nAct?nAct+" in piano · ":""}${items.length} voci ${open?"▴":"▾"}</span></button>`;
+    if(open){
+      h+=`<div class="pubbody">`;
+      if(INFO[p])h+=`<div class="info">${INFO[p]}</div>`;
+      for(const d of ["mer","gio","both"]){
+        const arr=items.filter(e=>e.d===d);if(!arr.length)continue;
+        h+=`<div class="dayh">${d==="both"?"Senza orario / entrambi i giorni":DAYN[d]}</div>${arr.map(e=>optHTML(e,{box:e.k!=="ora"})).join("")}`;
+      }
+      h+=`</div>`;
+    }
+    h+=`</section>`;
+  }
+  return h+foot();
+}
+function renderMappa(){
+  const vis=EVENTS.filter(e=>e.poi&&onDay(e,ui.day)&&st(e)!=="salto"&&(!ui.mapPlan||isActive(e)));
+  const by={};for(const e of vis)(by[e.poi]=by[e.poi]||[]).push(e);
+  let marks=`<button class="mk k-park${ui.poi==="park"?" sel":""}" data-poi="park" style="left:${POI.park[0]/MW*100}%;top:${POI.park[1]/MH*100}%" aria-label="Parcheggio"><span>P</span></button>`;
+  for(const [p,arr] of Object.entries(by)){
+    if(p==="park")continue;
+    const k=arr.some(e=>st(e)==="fisso")?"k-fisso":arr.some(isActive)?"":"k-forse";
+    marks+=`<button class="mk ${k}${ui.poi===p?" sel":""}" data-poi="${p}" style="left:${POI[p][0]/MW*100}%;top:${POI[p][1]/MH*100}%" aria-label="${esc(POI[p][2])}"><span>${arr.length}</span></button>`;
+  }
+  let h=`<div class="mapbar"><button class="btn" data-zoom="-1">−</button><button class="btn" data-zoom="1">+</button><button class="chip" data-mapplan aria-pressed="${ui.mapPlan}">Solo il mio piano</button><span class="intro">${DAYN[ui.day]} · tocca un segnaposto</span></div>`;
+  h+=`<div class="mapwrap" id="mapwrap"><div class="mapinner" style="width:${Math.round(1100*ui.zoom)}px"><img src="mappa.jpg" alt="Mappa ufficiale Lucca Comics & Games 2026" width="2400" height="1684">${marks}</div></div>`;
+  if(ui.poi){
+    const arr=EVENTS.filter(e=>e.poi===ui.poi&&onDay(e,ui.day)).sort((a,b)=>(a.s?min(a.s):9999)-(b.s?min(b.s):9999));
+    h+=`<div class="sheet"><h3>${esc(POI[ui.poi][2])}</h3>${ui.poi==="park"?`<p class="intro">Da qui: Porta Santa Maria ~${walkMin("park","bandai")} min · Monografico Mirage ~${walkMin("park","mirage")} min · Napoleone ~${walkMin("park","nap1")} min · PalaBonelli ~${walkMin("park","bonelli")} min (stime).</p>`:""}${arr.map(e=>optHTML(e,{box:e.k!=="ora"})).join("")||(ui.poi==="park"?"":'<p class="empty">Niente qui per questo giorno.</p>')}</div>`;
+  }
+  return h;
+}
+function foot(){return `<div class="foot"><span>Lucca 60 · dati al 26/10/2026 · le scelte restano salvate su questo telefono</span><button class="reset" id="reset">Ripristina scelte iniziali</button></div>`}
+
+function render(){
+  const mw=document.getElementById("mapwrap"),keepMap=mw?[mw.scrollLeft,mw.scrollTop]:null;
+  renderInner();
+  const m2=document.getElementById("mapwrap");
+  if(m2&&keepMap){m2.scrollLeft=keepMap[0];m2.scrollTop=keepMap[1]}
+}
+function renderInner(){
+  const t=TABS.find(x=>x[0]===ui.tab);
+  document.getElementById("sectitle").textContent=t[1];
+  document.getElementById("nav").innerHTML=TABS.map(([k,l,ic])=>`<button data-tab="${k}" ${ui.tab===k?'aria-current="page"':""}>${ic}${l}</button>`).join("");
+  const showDays=ui.tab!=="editori";
+  document.getElementById("days").hidden=!showDays;
+  document.getElementById("band").classList.toggle("nodays",!showDays);
+  document.querySelectorAll(".day").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.day===ui.day)));
+  let c="";
+  if(ui.tab==="cal")c+=`<div class="seg" role="group" aria-label="Vista"><button data-mode="opzioni" aria-pressed="${ui.mode==="opzioni"}">Tutte le opzioni</button><button data-mode="piano" aria-pressed="${ui.mode==="piano"}">Solo il mio piano</button></div>`;
+  if(ui.tab==="cal"||ui.tab==="giorno"||ui.tab==="compra")c+=`<div class="chips" role="group" aria-label="Interessi">${CATS.map(([k,l])=>`<button class="chip" data-cat="${k}" aria-pressed="${ui.cat===k}">${l}</button>`).join("")}</div>`;
+  const ctr=document.getElementById("controls");ctr.innerHTML=c;ctr.hidden=!c;
+  const app=document.getElementById("app");
+  app.innerHTML=ui.tab==="cal"?renderCal():ui.tab==="giorno"?renderList("giorno"):ui.tab==="compra"?renderList("compra"):ui.tab==="editori"?renderEditori():renderMappa();
+}
+function centerMap(){
+  const w=document.getElementById("mapwrap");if(!w)return;
+  const inner=w.firstElementChild,p=ui.poi?POI[ui.poi]:[1750,1350];
+  w.scrollLeft=p[0]/MW*inner.offsetWidth-w.clientWidth/2;
+  w.scrollTop=p[1]/MH*inner.offsetHeight-w.clientHeight/2;
+}
+let toastT;function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2600)}
+
+document.addEventListener("click",ev=>{
+  const g=s=>ev.target.closest(s);
+  let el;
+  if(el=g("[data-tab]")){ui.tab=el.dataset.tab;ui.open=null;persist();render();window.scrollTo(0,0);if(ui.tab==="mappa")setTimeout(centerMap,0);return}
+  if(el=g(".day")){ui.day=el.dataset.day;ui.open=null;persist();render();window.scrollTo(0,0);return}
+  if(el=g("[data-mode]")){ui.mode=el.dataset.mode;persist();render();return}
+  if(el=g("[data-cat]")){ui.cat=el.dataset.cat;persist();render();return}
+  if(el=g("[data-done]")){const id=el.dataset.done;done[id]=!done[id];if(!done[id])delete done[id];persist();render();return}
+  if(el=g("[data-gomap]")){ui.poi=el.dataset.gomap;ui.tab="mappa";ui.open=null;persist();render();window.scrollTo(0,0);setTimeout(centerMap,0);return}
+  if(el=g(".act")){
+    const e=byId(el.dataset.id),k=el.dataset.set;state[e.id]=k;
+    if((k==="fisso"||k==="scelto")&&e.g){const moved=EVENTS.filter(x=>x.g===e.g&&x.id!==e.id&&isActive(x));moved.forEach(x=>state[x.id]="forse");if(moved.length)toast(`${moved.map(x=>DAYN[x.d]+" "+x.s).join(", ")} spostato in Forse`)}
+    persist();render();return;
+  }
+  if(el=g("[data-pub]")){const p=el.dataset.pub;ui.pubOpen[p]=!ui.pubOpen[p];render();return}
+  if(el=g("[data-poi]")){ui.poi=ui.poi===el.dataset.poi?null:el.dataset.poi;ui.open=null;render();return}
+  if(el=g("[data-zoom]")){const w=document.getElementById("mapwrap");const cx=(w.scrollLeft+w.clientWidth/2)/w.firstElementChild.offsetWidth,cy=(w.scrollTop+w.clientHeight/2)/w.firstElementChild.offsetHeight;ui.zoom=Math.min(3,Math.max(0.4,ui.zoom*(el.dataset.zoom==="1"?1.35:1/1.35)));persist();render();const w2=document.getElementById("mapwrap"),i2=w2.firstElementChild;w2.scrollLeft=cx*i2.offsetWidth-w2.clientWidth/2;w2.scrollTop=cy*i2.offsetHeight-w2.clientHeight/2;return}
+  if(el=g("[data-mapplan]")){ui.mapPlan=!ui.mapPlan;persist();render();return}
+  if(el=g("[data-open]")){ui.open=ui.open===el.dataset.open?null:el.dataset.open;const sc=document.getElementById("mapwrap");const keep=sc?[sc.scrollLeft,sc.scrollTop]:null;render();if(keep){const s2=document.getElementById("mapwrap");s2.scrollLeft=keep[0];s2.scrollTop=keep[1]}return}
+  if(el=g("#reset")){
+    if(el.classList.contains("arm")){for(const k in state)delete state[k];for(const k in done)delete done[k];persist();render();toast("Scelte iniziali ripristinate")}
+    else{el.classList.add("arm");el.textContent="Tocca di nuovo per confermare";setTimeout(()=>{const b=document.getElementById("reset");if(b){b.classList.remove("arm");b.textContent="Ripristina scelte iniziali"}},3000)}
+  }
+});
+document.addEventListener("keydown",ev=>{if((ev.key==="Enter"||ev.key===" ")&&ev.target.matches("[data-open]")){ev.preventDefault();ev.target.click()}});
+render();
+if(ui.tab==="mappa")setTimeout(centerMap,0);
+</script>
+
+<script>
+/* offline: service worker 61fefefcfb */
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})});
+  let reloaded=false;
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{if(reloaded)return;reloaded=true;location.reload()});
+}
+</script>
+</body>
+</html>
