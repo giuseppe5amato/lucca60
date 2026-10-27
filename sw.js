@@ -1,5 +1,5 @@
-/* Lucca 60 – service worker, versione 61fefefcfb */
-const CACHE="lucca60-61fefefcfb";
+/* Lucca 60 – service worker, versione 628eaa2c85 */
+const CACHE="lucca60-628eaa2c85";
 const CORE=["./","index.html","mappa.jpg","manifest.webmanifest","icon-192.png","icon-512.png","icon-maskable.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith("lucca60-")&&k!==CACHE&&k!=="lucca60-fonts").map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
