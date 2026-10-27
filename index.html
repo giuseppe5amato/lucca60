@@ -201,7 +201,7 @@ h2.sec{font-family:var(--f-display);font-size:16px;letter-spacing:.08em;text-tra
 
 <script>
 /* ---------- costanti ---------- */
-const BUILD="27/10 ore 21:55";
+const BUILD="27/10 ore 22:00";
 const DAYN={mer:"Mer 28",gio:"Gio 29",both:"Mer + Gio"};
 const CATS=[["all","Tutto"],["fumetti","Fumetti"],["ritiri","Ritiri e ticket"],["tcg","Magic e TCG"],["giochi","Giochi e librigame"],["figure","Action figure"],["eventi","Incontri ed eventi"]];
 const STATES={fisso:"Fisso",scelto:"Lo faccio",forse:"Forse",salto:"Salto"};
@@ -285,12 +285,13 @@ const EVENTS=[
  {id:"gbase",k:"ora",d:"mer",s:"09:00",e:"09:15",t:"THE GUNDAM BASE pop-up",pub:"bandai",poi:"gbase",w:"Piazza San Frediano",n:"Kit in anteprima: RG 1/144 Wing Gundam Zero EW (Apex Legends Valkyrie Ver.), RG 1/144 Freedom Gundam (Crypto Ver.), RG 1/144 Gundam Epyon (Alter Ver.) + altri limited GBase. Gadget: coroncina di carta (visita), Action Base 1 (sondaggio), Gunpla 40th Anniversary logo (seguire i social: farlo prima), shopper personalizzata (spesa da 40 €).",c:["figure"],st:"scelto"},
  {id:"bandai",k:"ora",d:"mer",s:"09:18",e:"09:35",t:"Bandai Namco Palace + Tamagotchi + Tamashii",pub:"bandai",poi:"bandai",w:"Via della Cavallerizza e Piazza Santa Maria",n:"Giro veloce: è vicino al parcheggio, ci ripassi a fine giornata (anche per il tutorial Naruto delle 18:15). Esclusive Banpresto, gashapon, Tamagotchi Original 30° esclusiva + TamaLab. Tamashii Nations ha due sedi: stand Bandai Namco e spazio Tamashii × Cosmic Group in Piazza Santa Maria (limited già venduti in altri eventi + esposizione world premiere). Saint Cloth Myth EX Sagittarius Seiya [God Cloth] \"in preorder\": chiedere come funziona.",c:["figure"],st:"scelto"},
  {id:"pika",k:"ora",d:"mer",s:"09:48",e:"09:55",t:"Carta Pikachu Lucca60",pub:"pokemon",poi:"pika",w:"Card Distribution Point, Welcome desk Santa Croce (sulle mura)",n:"Serve biglietto + braccialetto. Altro punto vicino: Biglietteria Santa Croce.",c:["tcg"],st:"scelto"},
- {id:"mirage-rit",k:"ora",d:"mer",s:"10:02",e:"10:15",t:"Ritiro preordine Mirage: 7 volumi + ticket Priority Plus",pub:"mirage",poi:"mirage",w:"Monografico Mirage/Shockdom, Piazzale Verdi",n:"Mostrare la mail del preordine. Chiedere se il ticket di Tarragona vale anche all'Artist Alley del Giglio.",c:["ritiri","fumetti"],st:"fisso"},
+ {id:"mirage-rit",k:"ora",d:"mer",s:"10:02",e:"10:15",t:"Ritiro preordine Mirage: 7 volumi + ticket Priority Plus",pub:"mirage",poi:"mirage",w:"Monografico Mirage/Shockdom, Piazzale Verdi",n:"Mostrare la mail del preordine. Da chiedere allo stand: 1) se Bendis firma anche un fumetto Marvel in più oltre allo Star Trek 60° (es. Daredevil con Maleev, Ultimate Spider-Man, Alias); 2) come si accede alle firme di Alex Maleev senza ticket (fila normale o Priority comprando un volume idoneo a Lucca).",c:["ritiri","fumetti"],st:"fisso"},
  {id:"pp-mer",k:"ora",d:"mer",s:"10:15",e:"10:30",t:"Pastrovicchio + Perissinotto (Street Sharks #1 A e B)",pub:"mirage",poi:"mirage",win:"Al Monografico solo 9:30–10:30",n:"Subito dopo il ritiro, con i ticket Priority Plus appena presi.",c:["fumetti","ritiri"],st:"fisso",g:"pp",alt:"Piano B: gio 9:30"},
  {id:"topo",k:"ora",d:"mer",s:"10:32",e:"10:40",t:"Topolino 3701 e 3702 variant",pub:"panini",poi:"panini",w:"Padiglione Panini, stand Disney (accanto a Porta San Donato)",n:"3701 variant Paolo Barbieri 8 €, 3702 variant Enrico Faccini 9 €.",c:["fumetti"],st:"scelto",price:17},
  {id:"tora",k:"ora",d:"mer",s:"10:52",e:"10:58",t:"Tora: librogame + firma Paolo Barbieri",pub:"tora",poi:"nap1",w:"Padiglione Napoleone, stand Tora 411",win:"Barbieri da Tora fino alle 11:00",n:"«Cosa fare a Lucca quando sei morto…» (Ultima Forsan, volume speciale Lucca60). Se hai già il Topolino 3701 (cover sua) chiedi se firma anche quello. C'è anche Toccafondi (Aki).",c:["giochi","fumetti"],st:"scelto",b:"Barbieri fino alle 11"},
  {id:"salda-esc",k:"ora",d:"mer",s:"11:00",e:"11:20",t:"Esclusive saldaPress",pub:"salda",poi:"nap2",w:"Padiglione Napoleone 2",n:"Bundle Transformers #1 Dan Mora (Optimus + Megatron, 7 stampe), vol. 5 DWJ, Battle Beast vol. 2 Ottley, G.I. Joe #1 variant Simmonds (serve per la firma di giovedì). Prendi anche: un Undiscovered Country (per Camuncoli) e Manaya / Super Creepshow / TF #1 variant Di Giandomenico (per Di Giandomenico). Se le variant sono finite, si riprova giovedì.",c:["fumetti"],st:"scelto"},
  {id:"dg-mer",k:"ora",d:"mer",s:"11:20",e:"12:00",t:"saldaPress: Carmine Di Giandomenico",pub:"salda",poi:"nap2",win:"11:00–13:00",n:DGNOTE,c:["fumetti"],st:"scelto",g:"dg",alt:"Alternativa a gio 16:00",b:"15 doodle a sessione"},
+ {id:"maleev-mer",k:"ora",d:"mer",s:"14:40",e:"14:50",t:"Alex Maleev (Daredevil con Bendis)",pub:"autori",poi:"mirage",w:"Monografico Mirage, Piazzale Verdi",win:"Mer: Monografico 14:30-15:30 · Giglio GGL113 9:30-14 · 16-19",n:"Non hai un ticket Priority per lui: modalità da chiedere al ritiro Mirage. Al Monografico è subito dopo Recchioni; se lo fai, Tarragona slitta di 10 minuti. Gio: Monografico 14:30-15:30, Giglio 9:30-14 · 16-17.",c:["fumetti"],st:"forse",b:"Senza ticket"},
  {id:"pranzo-mer",k:"ora",d:"mer",s:"12:15",e:"12:45",t:"Pranzo (zona Napoleone)",pub:"lucca",poi:"nap1",w:"Intorno a Piazza Napoleone",n:"Alle 12:55 in fila per Camuncoli.",c:[],st:"scelto"},
  {id:"camu",k:"ora",d:"mer",s:"13:00",e:"14:00",t:"saldaPress: Giuseppe Camuncoli",pub:"salda",poi:"nap2",win:"13:00–14:30, unica sessione",n:"Per entrare serve comprare un volume di Undiscovered Country (1-6). Solo 10 doodle: in fila alle 13:00.",c:["fumetti"],st:"scelto",b:"10 doodle a sessione"},
  {id:"nagai-v",k:"ora",d:"mer",s:"13:30",e:"13:45",t:"Go Nagai: voucher rimasti",pub:"lucca",poi:"voucher",w:"Ritiro voucher prenotazioni (Piazzale Verdi)",win:"Distribuzione voucher non ritirati alle 13:30",n:"Prenotazione del 23/10 non riuscita. Ultima possibilità, fino a esaurimento. Si sovrappone a Camuncoli.",c:["eventi"],st:"forse",b:"Non garantito"},
@@ -599,7 +600,7 @@ if(ui.tab==="mappa")setTimeout(centerMap,0);
 </script>
 
 <script>
-/* offline: service worker c25d7c497d */
+/* offline: service worker 767267df04 */
 if("serviceWorker" in navigator){
   window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})});
   let reloaded=false;
